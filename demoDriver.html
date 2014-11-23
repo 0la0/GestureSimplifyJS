@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Simplify Gesture Demo</title>
+  <style>
+    body
+    {
+      background: #cccccc;
+    }
+    #cvs
+    {
+      background: #ffffff;
+      border: 1px solid #000000;
+      margin-left: 0px;
+      margin-top: 0px;
+    }
+  </style>
+  <script src="gestureSimplify.js"></script>
+</head>
+<body>
+</body>
+  <canvas id="cvs"></canvas>
+  <cavass id="dispCvs"></canvas>
+  <script>
+    var width = 400;
+    var height = 300;
+    var mouseIsDown = false;
+    var isRendering = false;
+    var lastIndexRendered;
+    var gesture = [];
+    var g2d, dispG2d;
+
+    var canvas = document.getElementById('cvs');
+    canvas.width = width;
+    canvas.height = height;
+
+    //create graphics context
+    g2d = canvas.getContext('2d');
+    g2d.lineWidth = 8;
+    g2d.lineCap = 'round';
+    g2d.lineJoin = 'round';
+    g2d.strokeStyle = "#555555";
+    g2d.clearRect(0, 0, width, height);
+		
+    //register canvas listeners - mouse
+    canvas.addEventListener('mousedown', function(e){
+      e.preventDefault();
+      initGesture();
+      pushCoordsToGesture(
+        e.pageX - canvas.offsetLeft,
+        e.pageY - canvas.offsetTop
+      );
+    }, false);
+    canvas.addEventListener('mousemove', function(e){
+      e.preventDefault();
+      if (mouseIsDown){
+        pushCoordsToGesture(
+          e.pageX - canvas.offsetLeft,
+          e.pageY - canvas.offsetTop
+        );
+      }
+    }, false);
+    canvas.addEventListener('mouseup', function(e){
+      e.preventDefault();
+      mouseIsDown = false;
+      demoGestSimp();
+    }, false);
+		
+    //register canvas listeners - touch: one finger only
+    canvas.addEventListener('touchstart', function(e){
+      e.preventDefault();
+      initGesture();
+      pushCoordsToGesture(
+        e.touches[0].pageX - canvas.offsetLeft,
+        e.touches[0].pageY - canvas.offsetTop
+      );
+    }, false);
+    canvas.addEventListener('touchmove', function(e){
+      e.preventDefault();
+      if (mouseIsDown){
+        pushCoordsToGesture(
+          e.touches[0].pageX - canvas.offsetLeft,
+          e.touches[0].pageY - canvas.offsetTop
+        );
+      }
+    }, false);
+    canvas.addEventListener('touchend', function(e){
+      e.preventDefault();
+      mouseIsDown = false;
+      demoGestSimp();
+    }, false);
+
+    function initGesture () {
+      g2d.clearRect(0, 0, width, height);
+      gesture = [];
+      lastIndexRendered = 1;
+      mouseIsDown = true;
+    }
+
+    function pushCoordsToGesture (x, y) {
+      gesture.push({x: x, y: y});
+      if (!isRendering){
+        isRendering = true;
+        requestAnimationFrame(renderLine);
+      }
+    }
+
+    function renderLine () {
+      g2d.beginPath();
+      g2d.moveTo(
+        gesture[lastIndexRendered - 1].x,
+        gesture[lastIndexRendered - 1].y
+      );
+      for (var i = lastIndexRendered; i < gesture.length; i++){
+        g2d.lineTo(gesture[i].x, gesture[i].y);
+      }
+      g2d.stroke();
+      lastIndexRendered = gesture.length;
+      isRendering = false;
+    }
+
+    function demoGestSimp () {
+      var simp = new GestureSimplify(copyGesture(gesture), 100);
+      simp.render(g2d);
+    }
+
+    function renderSimplifiedLine (simpGest) {
+      g2d.clearRect(0, 0, width, height);
+      g2d.beginPath();
+      g2d.moveTo(simpGest[0].x, simpGest[0].y);
+      for (var i = 1; i < simpGest.length; i++){
+        g2d.lineTo(simpGest[i].x, simpGest[i].y);
+      }
+      g2d.stroke();
+    }
+
+    function copyGesture (gest) {
+      var gestCopy = [];
+      for (var i = 0; i < gest.length; i++) {
+        gestCopy.push({x: gest[i].x, y: gest[i].y});
+      }
+      return gestCopy;
+    }
+
+  </script>
+</html>
